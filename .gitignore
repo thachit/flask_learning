@@ -1,0 +1,25 @@
+# ignore pyc file
+*.pyc
+# igore .idea folder
+**/.idea
+# Igore log file
+*.log
+*.log.*
+*/log
+log/
+# Igore mp4 file
+*.mp4
+# Ignore report data file
+*/report_data
+/report_data
+# Igore pid file
+*.pid
+# Igore file mac_address
+mac_address.txt
+config.cfg
+logo_checkblance.png
+check_balanace_background.png
+*.csv
+*.zip
+backup
+.idea
