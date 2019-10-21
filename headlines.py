@@ -1,28 +1,52 @@
-import feedparser
+"""
+
+A small Test application to show how to use Flask-MQTT.
+
+"""
+
+import json
 from flask import Flask
-from pprint import pprint as p
+from flask_mqtt import Mqtt
+
 
 app = Flask(__name__)
+app.config['SECRET'] = 'my secret key'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['MQTT_BROKER_URL'] = 'manage.game.local'
+app.config['MQTT_BROKER_PORT'] = 1883
+app.config['MQTT_USERNAME'] = ''
+app.config['MQTT_PASSWORD'] = ''
+app.config['MQTT_KEEPALIVE'] = 5
+app.config['MQTT_TLS_ENABLED'] = False
 
-BBC_FEED = "http://feeds.bbci.co.uk/news/rss.xml"
+
+mqtt = Mqtt(app)
 
 
-@app.route("/")
-def get_news():
-    feed = feedparser.parse(BBC_FEED)
-    p(feed)
-    first_article = feed['entries'][0]
-    return """<html>
-                <body>
-                <h1> BBC Headlines </h1>
-                <b>{0}</b> <br/>
-                <i>{1}</i> <br/>Getting Started with Our Headlines Project
-                [ 24 ]
-                <p>{2}</p> <br/>
-                </body>
-                </html>""".format(first_article.get("title"), first_article.get("published"),
-                                  first_article.get("summary"))
+@app.route('/')
+def index():
+    mqtt.publish('home/mytopic', 'this is my message')
+    return "I am running"
+
+@mqtt.on_connect()
+def handle_connect(client, userdata, flags, rc):
+    mqtt.subscribe('home/topic/rx')
+
+@mqtt.on_message()
+def handle_mqtt_message(client, userdata, message):
+    data = dict(
+        topic=message.topic,
+        payload=message.payload.decode(),
+        userdata=userdata
+    )
+    print("================> ",data)
+
+@mqtt.on_log()
+def handle_logging(client, userdata, level, buf):
+    print(level, buf)
 
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    # important: Do not use reloader because this will create two Flask instances.
+    # Flask-MQTT only supports running with one instance
+    app.run(host='0.0.0.0', port=5000)
